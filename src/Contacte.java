@@ -1,4 +1,7 @@
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Contacte {
@@ -6,7 +9,7 @@ public class Contacte {
 	private int id;
 	private String nom;
 	private String categoria;
-	private Map<Integer, Mitja> mitjans;
+	private Map<String, List<Mitja>> mitjans = new HashMap<>();
 	
 	// constructor especìfic
 	public Contacte(String nom) throws InvalidParamException {
@@ -61,7 +64,7 @@ public class Contacte {
 		return this.categoria;
 	}
 	
-	public Map<Integer, Mitja> getMitjans(){
+	public Map<String, List<Mitja>> getMitjans(){
 		return mitjans;
 	}
 	
@@ -69,7 +72,12 @@ public class Contacte {
 		if (mitja == null) {
 			throw new NotFoundException();
 		}else {
-			mitjans.put(mitja.getId(),mitja);
+			if (mitjans.containsKey(mitja.getTipus())) {
+				mitjans.get(mitja.getTipus()).add(mitja);
+			}else {
+				mitjans.put(mitja.getTipus(), new ArrayList<Mitja>());
+				mitjans.get(mitja.getTipus()).add(mitja);
+			}
 		}
 	}
 	

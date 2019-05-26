@@ -31,11 +31,10 @@ public class Comanda{
     	"^import +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^export +((\"[\\p{L} ]+\")|(\\p{L}+)) *$"
     };
-
+    
     private final String nom;
     private final List<String> arguments;
     private final boolean comandaDesconeguda;
-
     public Comanda(String nom, String... arguments) {
         this.nom = nom;
         this.arguments = Arrays.asList(arguments);

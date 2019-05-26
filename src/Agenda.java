@@ -4,7 +4,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+
+import org.postgresql.jdbc2.ArrayAssistantRegistry;
 
 /**
  * Llistat de contactes, fent servir una base de dades
@@ -95,29 +99,52 @@ public class Agenda {
 	
 	}
 	
+	/* Metodo que extrae las comillas de un texto si las tuviere*/
+	private String extreuCometas(String text) {
+		String resposta;
+		if (text.trim().startsWith("\"") && text.trim().endsWith("\"")) {
+			resposta = text.trim().substring(1, text.trim().length()-1);
+			return resposta;
+		}else {
+			return text.trim();
+		}		
+	}
+	
 	/*
 	 * Busca en los nombres de los contactos contengan el
 	 * 'str' pasado por parámetro
 	 */
 	private void cercaContactePerStr(String str) throws SQLException {
-		String sql_buscanom = "SELECT id, nom FROM CONTACTES "
+		String s = extreuCometas(str);
+		/*String sql_buscanom = "SELECT id, nom FROM CONTACTES "
 				+ " WHERE lower(nom) like "
-				+ "'%" + str.toLowerCase() + "%'";
-		System.out.println("XXX cercaContactePerStr('"+str+"') " + sql_buscanom);
+				+ "'%" + s.toLowerCase() + "%'";*/
+		String sql_buscanom =	"select distinct c.nom " 
+								+ "from contactes c join mitjans m on (c.id = m.id_contacte) "
+								+ "where lower(m.tipus) like "
+								+ "'%" + s.toLowerCase() + "%' or "
+								+ "lower(m.referencia) like  "
+								+ "'%" + s.toLowerCase() + "%' or "
+								+ "lower(m.descripcio) like "
+								+ "'%" + s.toLowerCase() + "%' or "
+								+ "lower(c.nom) like "
+								+ "'%" + s.toLowerCase() + "%'";
+
+		System.out.println("XXX cercaContactePerStr('"+s+"') " + sql_buscanom);
 		Statement st = null;
 		try {
 			st = conn.createStatement();
 			ResultSet rs = st.executeQuery(sql_buscanom);
 			int nContactes = 0; 
 			while (rs.next()) {
-				int id = rs.getInt("id");
+				//int id = rs.getInt("id");
 				String nom = rs.getString("nom");
 				nContactes++;
 				System.out.println(nom);
 			}
 			if (nContactes==0) {
 				System.out.println("Cap contactes que contingui '"
-						+ str +"'");
+						+ s +"'");
 			}
 		}finally {
 			if (st != null) {
@@ -311,9 +338,7 @@ public class Agenda {
 					st.close();
 				}
 			}
-
-		}
-	
+		}	
 		
 	//afegeix contactes de prova
 	private void afegeixContactesInicials() throws SQLException, InvalidParamException {
@@ -363,8 +388,47 @@ public class Agenda {
 		
 	}
 	//carga els contactes
-	private void carregaContactes() {
-
+	private List<Contacte> carregaContactes() throws SQLException, InvalidParamException {
+		String sql = "SELECT * FROM CONTACTES";
+		List<Contacte> contactes = new ArrayList<>();
+		Statement st = null;
+		try {
+			st = conn.createStatement();
+			ResultSet rs = st.executeQuery(sql);
+			while (rs.next()) {
+				int id = rs.getInt("id");
+				String nom = rs.getString("nom");
+				String cat = rs.getString("categoria");
+				Contacte c = new Contacte(id, nom, cat);
+				contactes.add(c);
+			}
+		}finally {
+            if (st != null) { st.close(); }
+        }
+		return contactes;
+	}
+	
+	private void carregaMitjansDeContacte(Contacte c) throws NotFoundException, SQLException {
+		String sql = "SELECT * FROM MITJANS "
+				+ "WHERE ID_CONTACTE = " + c.getId();
+		Statement st = null;
+		try {
+			st = conn.createStatement();
+			ResultSet rs = st.executeQuery(sql);
+			while (rs.next()) {
+				int id = rs.getInt("id");
+				String tipus = rs.getString("tipus");
+				String referencia = rs.getString("referencia");
+				String descripcio = rs.getString("descripcio");
+				Mitja m = new Mitja(id, tipus, referencia, descripcio);
+				c.addMitja(m);
+			}
+		} finally {
+			if (st != null) {
+				st.close();
+			}
+		}
+		
 	}
 		
 	// mostra la llista d'animals

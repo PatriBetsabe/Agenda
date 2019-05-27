@@ -11,14 +11,16 @@ public class Contacte {
 	private String categoria;
 	private Map<String, List<Mitja>> mitjans = new HashMap<>();
 	
-	// constructor especìfic
+	// constructor per defecte
+		public Contacte() {}
+		
+		// constructor especìfic
 	public Contacte(String nom) throws InvalidParamException {
 		if (nom == null || nom.isEmpty() || nom.trim().isEmpty() ) {
 			throw new InvalidParamException("Introduce un nombre");
 		} else {
 			this.id = -1;
 			this.nom = nom;
-			this.categoria = null;
 		}
 	}
 	
@@ -35,11 +37,6 @@ public class Contacte {
 		}
     }
 	
-	// constructor per defecte
-	public Contacte() {}
-	
-	
-	
 	// métodes
 	// getters & setters
 	public int getId() {
@@ -53,7 +50,6 @@ public class Contacte {
 		return this.nom;
 	}
 	
-
 	public void setNom(String nom) throws InvalidParamException{
 		if (nom == null || nom.isEmpty() || nom.trim().isEmpty() ) 
 			throw new InvalidParamException();
@@ -62,6 +58,12 @@ public class Contacte {
 	
 	public String getCategoria() {
 		return this.categoria;
+	}
+	
+	public void setCategoria(String categoria) throws InvalidParamException{
+		if (categoria == null || categoria.isEmpty() || categoria.trim().isEmpty() ) 
+			throw new InvalidParamException();
+		this.categoria = categoria;
 	}
 	
 	public Map<String, List<Mitja>> getMitjans(){
@@ -81,6 +83,26 @@ public class Contacte {
 		}
 	}
 	
+	@Override
+	public String toString() {
+		String text = "";
+		if (categoria != null) {
+			text += this.getNom() + " (" + this.categoria + ")";
+		} else {
+			text += this.getNom();
+		}
+		if (!getMitjans().isEmpty()) {
+				
+			for (String tipus : getMitjans().keySet()) {
+				text += "\n-" + tipus + ": ";
+				for (Mitja m : getMitjans().get(tipus)) {
+					text += m.toString();
+				}
+			}
+		}
+		return text;
+	}
+
 	public void removeMitja(Mitja mitja) {
 		mitjans.remove(mitja.getId());
 	}

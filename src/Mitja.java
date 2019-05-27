@@ -59,8 +59,12 @@ public class Mitja {
 
 	@Override
 	public String toString() {
-		return "Mitja [id=" + id + ", tipus=" + tipus + ", referencia=" + referencia
-				+ ", descripcio=" + descripcio + "]";
+		
+		if (descripcio != null && !descripcio.equals("null")) {
+			return referencia;
+		}else {
+			return referencia + " (" + descripcio + ")";
+		}
 	}
 
 	

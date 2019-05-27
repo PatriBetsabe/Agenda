@@ -13,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Comanda{
-    private static final String[] comandesSenseArgs = { "ajuda", "llista", "sortir" };
+    private static final String[] comandesSenseArgs = { "ajuda", "llista", "sortir" ,"carrega"};
     private static final String[] comandesRegex = {
     	"^cerca contacte +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^cerca categoria +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
@@ -98,21 +98,29 @@ public class Comanda{
             return comanda;
         
         // assigna categoria
-        if ((comanda = comprovaUnArg(linia, "assigna categoria", comandesRegex[6], 1)) != null)
+        if ((comanda = comprovaUnArg(linia, "assigna categoria nula", comandesRegex[6], 1)) != null)
             return comanda;
         
         // assigna categoria nula
-        if ((comanda = comprovaDosArgs(linia, "assigna categoria nula", comandesRegex[7], 1, 4)) != null)
+        if ((comanda = comprovaDosArgs(linia, "assigna categoria", comandesRegex[7], 1, 4)) != null)
             return comanda;
-        /*
+        
         // afegeix mitja
-        if ((comanda = comprovaUnArg(linia, "afegeix mitja", comandesRegex[8], 1)) != null)
+        if ((comanda = comprovaQuatreArgs(linia, "afegeix mitja", comandesRegex[8], 1, 4, 7, 13)) != null)
             return comanda;
         
         // afegeix mitja sense desc
-        if ((comanda = comprovaDosArgs(linia, "afegeix mitja sense desc", comandesRegex[9], 1, 2)) != null)
+        if ((comanda = comprovaTresArgs(linia, "afegeix mitja sense desc", comandesRegex[9], 1, 4, 7)) != null)
             return comanda;
-        */
+
+        // elimina mitja s
+        if ((comanda = comprovaTresArgs(linia, "elimina mitja", comandesRegex[10], 1, 4, 7)) != null)
+            return comanda;
+        
+        // assigna descr a mitja
+        if ((comanda = comprovaTresArgs(linia, "assigna desc a mitja", comandesRegex[12], 1, 4, 7)) != null)
+            return comanda;
+
         //import
         if ((comanda = comprovaUnArg(linia, "import", comandesRegex[13], 1)) != null)
             return comanda;
@@ -170,6 +178,16 @@ public class Comanda{
         }
         return null;
     }
+    
+    private String extreuCometas(String text) {
+		String resposta;
+		if (text.trim().startsWith("\"") && text.trim().endsWith("\"")) {
+			resposta = text.trim().substring(1, text.trim().length()-1);
+			return resposta;
+		}else {
+			return text.trim();
+		}		
+	}
 
 	public static void main(String[] args) {
     	Comanda c = new Comanda();

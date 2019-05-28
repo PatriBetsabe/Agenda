@@ -887,54 +887,66 @@ public class Agenda {
 		return linies;
 	}
 	
-	private void mostraSeguent(int posFinal, int posInicial, int numPaginas, int contactesXpagina ) {
-		for (int i = 0; i< numPaginas; i++) {
-			System.out.println("Estic a la página num:" + numPaginas + 1);
-			for (int j = posInicial; j>posInicial + contactesXpagina; j++) {
-				System.out.println("Mostrant contacte de la posicio: " + posInicial);
-				
-			}
+	private List<Contacte> mostraPagina(int numPagina, int contactesXpagina, List<Contacte> contactes) {
+		int posInicial = (numPagina-1) * contactesXpagina;
+		int posInicialFija = posInicial;
+		List<Contacte> paginaResultant = new ArrayList<>();
+		while(posInicial<posInicialFija+contactesXpagina && posInicial<contactes.size()) {
+			paginaResultant.add(contactes.get(posInicial));
+			posInicial++;
+		}
+		return paginaResultant;
+	}
+	
+	private void llistarPagina (List<Contacte> paginaResultant)
+	{
+		for (Contacte c : paginaResultant) {
+			System.out.println(c.toString());
 		}
 	}
 	
 	//mostra els contactes en format paginació
-	private void mostraPaginant(List<Contacte> contactes) {
-		System.out.println("Paginació:");
-		
-		int contactesXpagina = 3;
+	private void mostraPaginant(List<Contacte> contactes) throws SQLException, InvalidParamException, NotFoundException {
+		List<Contacte> paginaResultant = new ArrayList<>();
+		int contactesXpagina = 5;
 		int numPaginas = 0;
-		int posInicial = 0;
+		int paginaActual=1;
 		int resto = 0;
+		String rpta = "";
+		numPaginas = contactes.size()/contactesXpagina;
+		resto = contactes.size()%contactesXpagina;
+		if (resto > 0) 
+			numPaginas += 1;
 		
 		while (true) {
-			String rpta = entrada.next().toUpperCase();
-			numPaginas = contactes.size()/contactesXpagina;
-			resto = contactes.size()%contactesXpagina;
-			if (resto > 0) {
-				numPaginas = numPaginas + 1 ;
-			}
-			System.out.println("num paginass finales " + numPaginas);
-			System.out.println("resto: "+ resto);
+			
 			if (rpta.equals("S")) {
-				System.out.println("S: pàgina següent \t A: pàgina anterior \t X: finalitzar");
-				System.out.println("sgut");
-				for (int i = 0; i< numPaginas; i++) {
-					System.out.println("Estic a la página num:" + (i + 1));
-					posInicial=i*3;
-					for (int j = posInicial; j<(posInicial + contactesXpagina); j++) {
-						System.out.println(contactes.get(j).toString());	
-					}
-				}
+				if(paginaActual < numPaginas)
+					paginaActual += 1;
+				
+				System.out.println("Pàgina: " + paginaActual + " de " + numPaginas + "\n");
+				paginaResultant = mostraPagina(paginaActual, contactesXpagina, carregaContactes());
+				llistarPagina(paginaResultant);
+				System.out.println("\n S: pàgina següent \t A: pàgina anterior \t X: finalitzar");
 			} else if (rpta.equals("A")) {
-				System.out.println("S: pàgina següent\t A: pàgina anterior \t X: finalitzar");
-				System.out.println("anterior");
+				if(paginaActual > 1)
+					paginaActual -= 1;
+				System.out.println("Pàgina: " + paginaActual + " de " + numPaginas + "\n");
+				paginaResultant = mostraPagina(paginaActual, contactesXpagina, carregaContactes());
+				llistarPagina(paginaResultant);
+				System.out.println("\n S: pàgina següent\t A: pàgina anterior \t X: finalitzar");
 			} else if (rpta.equals("X")) {
 				break;
 			} else {
-				System.out.println("S: pàgina següent\t A: pàgina anterior \t X: finalitzar");
+				System.out.println("Pàgina: " + paginaActual + " de " + numPaginas + "\n");
+				paginaResultant = mostraPagina(paginaActual, contactesXpagina, carregaContactes());
+				llistarPagina(paginaResultant);
+				System.out.println("\n S: pàgina següent \t A: pàgina anterior \t X: finalitzar");
 			}
+			rpta = entrada.next().toUpperCase();
 		}
 	}
+	
 	
 	/**
 	 * Carga los contactos de la base de datos

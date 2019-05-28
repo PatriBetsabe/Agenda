@@ -20,11 +20,11 @@ public class Comanda{
     	"^cerca categoria +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^afegeix contacte +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^elimina contacte +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
-    	"^reanomena contacte +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
+    	"^reanomena contacte +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",  "^afegeix num +([\\p{L} ]+) +([\\w.+]+) *$",
     	"^assigna categoria +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^assigna categoria +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^afegeix mitja +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
-    	"^afegeix mitja +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
+    	"^afegeix mitja +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\w.+]+\")|(\\w.+)+) *$",
     	"^elimina mitja +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^assigna descr +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^assigna descr +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
@@ -106,7 +106,7 @@ public class Comanda{
             return comanda;
         
         // afegeix mitja
-        if ((comanda = comprovaQuatreArgs(linia, "afegeix mitja", comandesRegex[8], 1, 4, 7, 13)) != null)
+        if ((comanda = comprovaQuatreArgs(linia, "afegeix mitja", comandesRegex[8], 1, 4, 7, 10)) != null)
             return comanda;
         
         // afegeix mitja sense desc

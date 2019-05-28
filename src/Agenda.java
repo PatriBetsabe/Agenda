@@ -1,3 +1,9 @@
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -7,12 +13,11 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
-import org.postgresql.jdbc2.ArrayAssistantRegistry;
 
 /**
- * Llistat de contactes, fent servir una base de dades
- * per guardar la informació dels nostres contactes.
+ * @nomProject "Agenda", 
+ * Fent servir la base de dades PostGreSQL,
+ * Gestionem com guardar la informació dels contactes
  * @author Patricia Lamadrid Robles
  * @see <a href="https://moiatgit.github.io/jda.daw1.m03/bd.agenda.html"/>
  *
@@ -205,6 +210,185 @@ public class Agenda {
 		}
 	}
 	
+	// cambia la descripcion del contacto, partiendo del id recibido
+	private void assignaDescripcio(int id, String tipus, String ref, String descr) throws SQLException {
+		String sql = "UPDATE MITJANS "
+				+ "SET DESCRIPCIO = '" + descr
+				+ "' WHERE ID_CONTACTE = " + id
+				+ " AND lower(trim(TIPUS)) LIKE '"
+				+ tipus + "' AND lower(trim(REFERENCIA)) LIKE '" + ref + "'";
+		Statement st = null;
+		try {
+			st = conn.createStatement();
+			st.executeUpdate(sql);
+		} finally {
+			if (st != null) { st.close();}
+		}
+	}
+		
+	// cambia la descripcion a null, partiendo del id recibido
+	private void assignaDescripcioNull(int id, String tipus, String ref) throws SQLException {
+		String sql = "UPDATE MITJANS "
+				+ "SET DESCRIPCIO = null"
+				+ " WHERE ID_CONTACTE = " + id
+				+ " AND lower(trim(TIPUS)) LIKE '"
+				+ tipus + "' AND lower(trim(REFERENCIA)) LIKE '" + ref + "'";
+		Statement st = null;
+		try {
+			st = conn.createStatement();
+			st.executeUpdate(sql);
+		} finally {
+			if (st != null) { st.close();}
+		}
+	}
+	
+	//métode que permet assignar una nova descripció a un mitjà de contacte
+	private void gestionaAssignaDescripcio(String str, String tipus, String ref, String descr) throws SQLException, InvalidParamException, NotFoundException {
+		String s = extreuCometas(str);
+		int coincidencies = cercaCoincidencies(s);
+		if (coincidencies != 1) {
+			gestionaCoincidenciesDiferenteDeUno(s);
+		}else {
+			List<Contacte> c = contactesAmbCoincidencies(s);
+			// cas descripcio null
+			if (descr == null) {
+				if (!existeMitjaEnContacto(c.get(0), extreuCometas(tipus).trim().toLowerCase(),
+						extreuCometas(ref).trim().toLowerCase(), null)) {
+					System.out.println("El contacte no té aquest mitjà, no faig res");
+				} else {
+					System.out.println("Les dades del contacte:");
+					System.out.println(c.get(0).toString());
+					System.out.println("es canviarà la descripcio a null, vols continuar?");
+					System.out.print(">> ");
+					String rpta = entrada.next();
+					switch (rpta.toUpperCase()) {
+					case "SI":		
+						assignaDescripcioNull(c.get(0).getId(), tipus.trim().toLowerCase(),ref.trim().toLowerCase());
+						System.out.println("Descripcio actualitzada!");
+						break;
+					case "NO":
+						System.out.println("Has cancel·lat l'operació");
+						break;
+					default:
+						System.out.println("No t'entenc");
+					}
+				}
+			} else {
+				// cas descripcio no null
+				if (!existeMitjaEnContacto(c.get(0), extreuCometas(tipus).trim().toLowerCase(),
+						extreuCometas(ref).trim().toLowerCase(),
+						extreuCometas(descr).trim().toLowerCase())) {
+					System.out.println("El contacte no té aquest mitjà, no faig res");
+				} else {
+					System.out.println("segur que vols canviar o assignar descripcio?");
+					System.out.println(c.get(0).toString());
+					System.out.print(">> ");
+					String rpta = entrada.next();
+					switch (rpta.toUpperCase()) {
+					case "SI":		
+						assignaDescripcio(c.get(0).getId(), tipus.trim().toLowerCase(),ref.trim().toLowerCase(),descr);
+						System.out.println("Descripcio actualitzada!");
+						break;
+					case "NO":
+						System.out.println("Has cancel·lat l'operació");
+						break;
+					default:
+						System.out.println("No t'entenc");
+					}
+				}
+			}
+			
+		}	
+	}
+	
+	// elimina un mitja desde la base de datos
+	private void eliminaMitjaDeContacte(int id, String tipus, String ref) throws SQLException {
+			String sql = "DELETE FROM MITJANS "
+					+ "WHERE ID_CONTACTE = " + id
+					+ " AND lower(trim(TIPUS)) LIKE '"
+					+ tipus + "' AND lower(trim(REFERENCIA)) LIKE '" + ref + "'";
+			Statement st = null;
+			try {
+				st = conn.createStatement();
+				int num = st.executeUpdate(sql);
+				System.out.println("Mitjà eliminat");
+			} finally {
+				if (st != null) { st.close();}
+			}
+		}
+	
+	// gestiona la eliminación de un medio del contacto
+	private void gestionaEliminaMitja(String str, String tipus, String ref) throws SQLException, InvalidParamException, NotFoundException {
+		int coincidencies = cercaCoincidencies(extreuCometas(str));
+		if (coincidencies != 1) {
+			gestionaCoincidenciesDiferenteDeUno(extreuCometas(str));
+		}else {
+			List<Contacte> c = contactesAmbCoincidencies(str);
+			if (!existeMitjaEnContacto(c.get(0), tipus, ref, null)) {
+				System.out.println("El contacte no té aquest mitjà, no faig res");
+			} else {
+				eliminaMitjaDeContacte(c.get(0).getId(), tipus.trim().toLowerCase(),ref.trim().toLowerCase());
+			}
+		}
+	}
+	
+	// método que gestiona eñ añadir mitja al contacto, haciendo la verificacion de descr nula
+	private void gestionaAfegeixMitja(String str, String tipus, String ref, String descr) throws SQLException, InvalidParamException, NotFoundException {
+		int coincidencies = cercaCoincidencies(extreuCometas(str));
+		if (coincidencies != 1) {
+			gestionaCoincidenciesDiferenteDeUno(extreuCometas(str));
+		}else {
+			List<Contacte> c = contactesAmbCoincidencies(str);
+			if (existeMitjaEnContacto(c.get(0), tipus, ref, descr)) {
+				System.out.println("El contacte ja té aquest mitjà, no faig res");
+			} else {
+				if (descr != null) {
+					Mitja nou = new Mitja(tipus, ref, descr);
+					System.out.println("XXX c.get(0).getId():" + c.get(0).getId());
+					System.out.println("XXX dades mitja nou:" + nou.toString());
+					/**
+					 * XXX Mostrar quins mitjans són coneguts
+					 * (en el cas que el tipus del mitjà no és un dels coneguts)
+					 */
+					afegeixMitjaAContacte(c.get(0).getId(), nou);
+				}else {
+					Mitja nou = new Mitja(tipus,ref);
+					afegeixMitjaAContacteAmbDescrNull(c.get(0).getId(), nou);
+				}				
+			}
+		}
+	}
+	
+	//Añade un mitja al contacto pasado por id
+	private void afegeixMitjaAContacte(int id, Mitja mitja) throws SQLException {
+		String sql = "INSERT INTO MITJANS VALUES (DEFAULT, "
+				+ id + ", '" + mitja.getTipus() + "', '"
+				+ mitja.getReferencia() + "', '"
+				+ mitja.getDescripcio() + "')";
+		Statement st = null;
+		try {
+			st = conn.createStatement();
+			st.executeUpdate(sql);
+			System.out.println(mitja.toString() + " afegit!");
+		} finally {
+			if (st != null) { st.close();}
+		}
+	}
+	
+	//Añade un mitja sin descripcion, al contacto pasado por id
+	private void afegeixMitjaAContacteAmbDescrNull(int id, Mitja mitja) throws SQLException {
+		String sql = "INSERT INTO MITJANS VALUES (DEFAULT, "
+				+ id + ", '" + mitja.getTipus() + "', '"
+				+ mitja.getReferencia() + "', null)";
+		Statement st = null;
+		try {
+			st = conn.createStatement();
+			st.executeUpdate(sql);
+			System.out.println(mitja.toString() + " afegit!");
+		} finally {
+			if (st != null) { st.close();}
+		}
+	}
 	
 	/**Crea un contacte amb el nom indicat 
 	 * i amb cap mitjà de contacte.
@@ -240,14 +424,16 @@ public class Agenda {
 		}
 	}
 	
+	// assigna la categoria a nul
 	private void gestionaAssignaCategoriaNula(String str) throws SQLException, InvalidParamException, NotFoundException {
 		int coincidencies = cercaCoincidencies(str);
 		if (coincidencies != 1) {
 			gestionaCoincidenciesDiferenteDeUno(str);
 		}else {
 			List<Contacte> c = contactesAmbCoincidencies(str);
-			System.out.println("es canviarà la categoria a null, vols continuar?");
+			System.out.println("Les dades del contacte:");
 			System.out.println(c.get(0).toString());
+			System.out.println("es canviarà la categoria a null, vols continuar?");
 			System.out.print(">> ");
 			String rpta = entrada.next();
 			switch (rpta.toUpperCase()) {
@@ -264,6 +450,7 @@ public class Agenda {
 		}
 	}
 	
+	// cambia la categoria a null, partiendo del id recibido
 	private void assignaCategoriaNula(int id) throws SQLException {
 		String sql = "UPDATE CONTACTES SET CATEGORIA = null WHERE id = " + id;
 		Statement st = null;
@@ -275,6 +462,7 @@ public class Agenda {
 		}
 	}
 	
+	// método que gestiona el atributo categoria del contacto
 	private void gestionaAssignaCategoria(String str, String categoria) throws SQLException, InvalidParamException, NotFoundException {
 		int coincidencies = cercaCoincidencies(str);
 		if (coincidencies != 1) {
@@ -299,6 +487,7 @@ public class Agenda {
 		}
 	}
 	
+	// método que assigna la categoria, desde bases de datos
 	private void assignaCategoriaDeContacte(int id, String categoria) throws SQLException {
 		String sql = "UPDATE CONTACTES SET CATEGORIA = '" + categoria +
 				"' WHERE id = " + id;
@@ -311,6 +500,7 @@ public class Agenda {
 		}
 	}
 	
+	// método que gestiona el renombramiento de un contacto
 	private void gestionaReanomenaContacte(String str, String nom) throws SQLException, InvalidParamException, NotFoundException {
 		int coincidencies = cercaCoincidencies(str);
 		if (coincidencies != 1) {
@@ -336,6 +526,7 @@ public class Agenda {
 		}
 	}
 	
+	// método de renombra un contacto desde bases de datos
 	private void reanomenaNomDeContacte(int id, String nom) throws SQLException {
 		String sql = "UPDATE CONTACTES SET NOM = '" + nom +
 				"' WHERE id = " + id;
@@ -348,6 +539,7 @@ public class Agenda {
 		}
 	}
 	
+	// método que gestiona la eliminación de un contacto
 	private void gestionaEliminaContacte(String str) throws SQLException, InvalidParamException, NotFoundException {
 		int coincidencies = cercaCoincidencies(str);
 		if (coincidencies != 1) {
@@ -376,6 +568,7 @@ public class Agenda {
 		}
 	}
 	
+	// elimina el contacto desde bases de datos
 	private void eliminaContactePerId(int id) throws SQLException {
 		String sql = "DELETE FROM CONTACTES "
 				+ "WHERE ID = " + id;
@@ -387,6 +580,13 @@ public class Agenda {
 			if (st != null) { st.close();}
 		}
 	}
+	
+	/**
+	 * elimina los medios de contacte a eliminar 
+	 * despues de haberse asegurado que este tiene mitjans.
+	 * @param id
+	 * @throws SQLException
+	 */
 	
 	private void eliminaMitjansDeContactePerId(int id) throws SQLException {
 		String sql = "delete from contactes c "
@@ -403,12 +603,22 @@ public class Agenda {
 	        }
 	}
 	
+	/**
+	 * Método para simplificarme la vida
+	 * Si encuentra mas de una coincidiencia o no encuentra alguna en la búsqueda de 'str',
+	 * lo sabe gestionar.
+	 * @param str
+	 * @throws SQLException
+	 * @throws InvalidParamException
+	 * @throws NotFoundException
+	 */
 	private void gestionaCoincidenciesDiferenteDeUno(String str) throws SQLException, InvalidParamException, NotFoundException {
 		int coincidencies = cercaCoincidencies(str);
 		if (coincidencies == 0) {
 			System.out.println("no s'han trobat coincidències");
 		} else if (coincidencies > 1) {
 			System.out.println("cal especificar més");
+			System.out.println("S'han trobat aquests contactes: ");
 			List<Contacte> contactes = contactesAmbCoincidencies(str);
 			for (int i = 0; i<contactes.size();i++) {
 				System.out.println(contactes.get(i).toString());
@@ -432,7 +642,7 @@ public class Agenda {
 	}
 	
 	// elimina la taula mitjans si existeix
-		private void eliminaTaulaMitjans() throws SQLException {
+	private void eliminaTaulaMitjans() throws SQLException {
 			Statement st = null;
 			try {
 				st = conn.createStatement();
@@ -453,7 +663,7 @@ public class Agenda {
 				conn.close();
 			} catch (SQLException e) {
 			}
-			//System.out.println("Desconnectat");
+			System.out.println("Desconnectat");
 			conn = null;
 		}
 	}
@@ -561,7 +771,7 @@ public class Agenda {
 		return resultat;
 	}
 	
-	//
+	// retorna 1 si el str está contenido en algun dato del contacto
 	public int cercaCoincidenciesenContacte(Contacte c,String str){
 		boolean trobat = cercaCoincidenciesEnNomContacte(c, str)
 				|| cercaCoincidenciesEnMitjansDeContacte(c, str);
@@ -569,7 +779,13 @@ public class Agenda {
 			return 0;
 	}
 
-	//B
+	/**
+	 * Busca las coincidecias del 'str' recibido en el nombre del contacto
+	 * en caso haya alguna, retorna true
+	 * @param c
+	 * @param str
+	 * @return
+	 */
 	public boolean cercaCoincidenciesEnNomContacte(Contacte c, String str) {
 		if (c.getNom().trim().toLowerCase().contains(str.trim().toLowerCase())) {
 			return true;
@@ -596,8 +812,138 @@ public class Agenda {
 		return resposta;
 	}
 	
+	//Busca si el mitja ya existe
+	public boolean existeMitjaEnContacto(Contacte c,String tipus, String ref, String descr) {
+		boolean resposta = false;
+		String tp = tipus.trim().toLowerCase();
+		String rf = ref.toLowerCase().trim();
+		if (!c.getMitjans().isEmpty()) {
+			for (String tipo : c.getMitjans().keySet()) {
+				for (Mitja m : c.getMitjans().get(tipo)) {
+					if (descr != null) {
+						String ds = descr.trim().toLowerCase();
+						if ((m.getDescripcio()!= null && m.getDescripcio().trim().toLowerCase().equals(ds))
+								&&(m.getReferencia() != null && m.getReferencia().toLowerCase().equals(rf))
+								&& (m.getTipus() != null && m.getTipus().toLowerCase().equals(tp))) {
+							resposta = true;
+						}
+					} else {
+						if ((m.getReferencia() != null && m.getReferencia().toLowerCase().equals(rf))
+								&& (m.getTipus() != null && m.getTipus().toLowerCase().equals(tp))) {
+							resposta = true;
+						}
+					}
+				}
+			}
+		}
+
+		return resposta;
+	}
 	
-	//carga els contactes
+	/* Donat el camí a un fitxer i una seqüència de línies de text, escriu les
+     * línies de text al fitxer indicat.
+     * El booleà amplia permet indicar:
+     *  true: afegir les línies després dels continguts existents al fitxer
+     *  false: reemplaçar els continguts anteriors al fitxer pels nous */
+    private static void writeTextFile(String path,ArrayList<String> linies,boolean amplia) throws Exception {
+        FileWriter fileWriter = new FileWriter(path, amplia);
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        for (String linia: linies) {
+            bufferedWriter.write(linia);
+        }
+        bufferedWriter.close();
+    }
+
+	/*
+	 * Donat el camí a un fitxer, llegeix els seus continguts i els retorna en forma
+	 * d'ArrayList
+	 */
+	private static ArrayList<String> readTextFile(String path) throws Exception {
+		ArrayList<String> linies = new ArrayList<String>();
+		FileReader fileReader = null;
+		try {
+			fileReader = new FileReader(path);
+			BufferedReader bufferedReader = new BufferedReader(fileReader);
+			String linia = "";
+			while (linia != null) {
+				linia = bufferedReader.readLine();
+				if (linia != null) {
+					linies.add(linia);
+				}
+			}
+		}catch (FileNotFoundException e) {
+			System.out.println("No es troba el fitxer " + path);
+		} catch (IOException e) {
+            System.out.println("Ops: s'ha produït una excepció d'entrada/sortida: " + e.getMessage());
+        } finally {
+        	try {
+        		if (fileReader != null) {
+        			fileReader.close();
+        		}
+        	}catch (IOException e) {
+                System.out.println("excepció!: "+ e.getMessage());
+            }
+        }
+		return linies;
+	}
+	
+	private void mostraSeguent(int posFinal, int posInicial, int numPaginas, int contactesXpagina ) {
+		for (int i = 0; i< numPaginas; i++) {
+			System.out.println("Estic a la página num:" + numPaginas + 1);
+			for (int j = posInicial; j>posInicial + contactesXpagina; j++) {
+				System.out.println("Mostrant contacte de la posicio: " + posInicial);
+				
+			}
+		}
+	}
+	
+	//mostra els contactes en format paginació
+	private void mostraPaginant(List<Contacte> contactes) {
+		System.out.println("Paginació:");
+		
+		int contactesXpagina = 3;
+		int numPaginas = 0;
+		int posInicial = 0;
+		int resto = 0;
+		
+		while (true) {
+			String rpta = entrada.next().toUpperCase();
+			numPaginas = contactes.size()/contactesXpagina;
+			resto = contactes.size()%contactesXpagina;
+			if (resto > 0) {
+				numPaginas = numPaginas + 1 ;
+			}
+			System.out.println("num paginass finales " + numPaginas);
+			System.out.println("resto: "+ resto);
+			if (rpta.equals("S")) {
+				System.out.println("S: pàgina següent \t A: pàgina anterior \t X: finalitzar");
+				System.out.println("sgut");
+				for (int i = 0; i< numPaginas; i++) {
+					System.out.println("Estic a la página num:" + (i + 1));
+					posInicial=i*3;
+					for (int j = posInicial; j<(posInicial + contactesXpagina); j++) {
+						System.out.println(contactes.get(j).toString());	
+					}
+				}
+			} else if (rpta.equals("A")) {
+				System.out.println("S: pàgina següent\t A: pàgina anterior \t X: finalitzar");
+				System.out.println("anterior");
+			} else if (rpta.equals("X")) {
+				break;
+			} else {
+				System.out.println("S: pàgina següent\t A: pàgina anterior \t X: finalitzar");
+			}
+		}
+	}
+	
+	/**
+	 * Carga los contactos de la base de datos
+	 * al programa, en tiempo real
+	 * @return
+	 * @throws SQLException
+	 * @throws InvalidParamException
+	 * @throws NotFoundException
+	 */
 	private List<Contacte> carregaContactes() throws SQLException, InvalidParamException, NotFoundException {
 		String sql = "SELECT * FROM CONTACTES";
 		List<Contacte> contactes = new ArrayList<>();
@@ -619,6 +965,13 @@ public class Agenda {
 		return contactes;
 	}
 	
+	/**
+	 * Carga los medios de contacto,
+	 * en caso este tuviese medios (tenga relación clave foranea = clave primaria)
+	 * @param Un contacto (c), para luego cargar todos a saco en un bucle.
+	 * @throws NotFoundException
+	 * @throws SQLException
+	 */
 	private void carregaMitjansDeContacte(Contacte c) throws NotFoundException, SQLException {
 		String sql = "SELECT * FROM MITJANS "
 				+ "WHERE ID_CONTACTE = " + c.getId();
@@ -642,31 +995,8 @@ public class Agenda {
 		}
 		
 	}
-		
-	// mostra la llista d'animals
-    private void consultaContactes() throws SQLException, InvalidParamException {
-        String sql = "SELECT * FROM CONTACTES ORDER BY nom";
-        Statement st = null;
-        try {
-            st = conn.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            int nContactes = 0;
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String nom = rs.getString("nom");
-                String cat = rs.getString("categoria");
-                Contacte contacte = new Contacte(id, nom, cat);
-                System.out.println(contacte);
-                nContactes++;
-            }
-            if (nContactes==0) System.out.println("De moment no hi ha contactes");
-            rs.close();
-        } finally {
-            if (st != null) { st.close(); }
-        }
-    }
 
-    
+    // entorno principal
 	public static void main(String[] args) {
 		Agenda agenda = new Agenda();		
 		Scanner entrada = new Scanner(System.in);
@@ -701,6 +1031,16 @@ public class Agenda {
 						agenda.gestionaAssignaCategoria(comanda.getArgument(0), comanda.getArgument(1));
 					} else if (comanda.getNom().equals("assigna categoria nula")) {
 						agenda.gestionaAssignaCategoriaNula(comanda.getArgument(0));
+					} else if (comanda.getNom().equals("afegeix mitja")) {
+						agenda.gestionaAfegeixMitja(comanda.getArgument(0),comanda.getArgument(1),comanda.getArgument(2),comanda.getArgument(3));
+					} else if (comanda.getNom().equals("afegeix mitja sense descr")) {
+						agenda.gestionaAfegeixMitja(comanda.getArgument(0),comanda.getArgument(1),comanda.getArgument(2),null);
+					} else if (comanda.getNom().equals("elimina mitja")) {
+						agenda.gestionaEliminaMitja(comanda.getArgument(0),comanda.getArgument(1),comanda.getArgument(2));
+					} else if (comanda.getNom().equals("assigna descr")) {
+						agenda.gestionaAssignaDescripcio(comanda.getArgument(0),comanda.getArgument(1),comanda.getArgument(2),comanda.getArgument(3));
+					} else if (comanda.getNom().equals("assigna descr nula")) {
+						agenda.gestionaAssignaDescripcio(comanda.getArgument(0),comanda.getArgument(1),comanda.getArgument(2),null);
 					} else if (comanda.getNom().equals("import")) {
 						System.out.println("import..");
 					} else if (comanda.getNom().equals("export")) {
@@ -711,7 +1051,11 @@ public class Agenda {
 						}
 					}
 				} else {
+					if (input.isEmpty()) {
+						agenda.mostraPaginant(agenda.carregaContactes());
+					}else {
 					System.out.println("No t'entenc");
+					}
 				}
 			}
 			System.out.println("Adéu");

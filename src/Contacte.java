@@ -91,12 +91,11 @@ public class Contacte {
 		} else {
 			text += this.getNom();
 		}
-		if (!getMitjans().isEmpty()) {
-				
+		if (!getMitjans().isEmpty()) {	
 			for (String tipus : getMitjans().keySet()) {
 				text += "\n-" + tipus + ": ";
 				for (Mitja m : getMitjans().get(tipus)) {
-					text += m.toString();
+					text += m.toString() + " ";
 				}
 			}
 		}

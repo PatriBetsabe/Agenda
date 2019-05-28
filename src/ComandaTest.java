@@ -286,15 +286,16 @@ public class ComandaTest {
         assertFalse(comanda.esComandaDesconeguda());
     }
     
+    
     @Test
     public void testProcessaComandaPerEliminaMitja2() {
-        String linia = "elimina mitja Natasha telefon +697824853";
+        String linia = "elimina mitja Natasha telefon aquinopuedeirunnumeronoseporque";
         Comanda comanda = Comanda.processaComanda(linia);
         String nomComandaEsperat = "elimina mitja";
         int numArgumentsEsperats = 3;
         String arg1Esperat = "Natasha";
         String arg2Esperat = "telefon";
-        String arg3Esperat = "697824853";
+        String arg3Esperat = "aquinopuedeirunnumeronoseporque";
         assertEquals(nomComandaEsperat, comanda.getNom());
         assertEquals(numArgumentsEsperats, comanda.getNumArguments());
         assertEquals(arg1Esperat, comanda.getArgument(0));
@@ -303,16 +304,16 @@ public class ComandaTest {
         assertFalse(comanda.esComandaDesconeguda());
     }
     
-    /*
+    
     @Test
     public void testProcessaComandaPerEliminaMitjaAmbCometas() {
-        String linia = "elimina mitja \"Natasha Java\" \"twitter\" \"@nata123\"";
+        String linia = "elimina mitja \"Natasha Java\" twitter ata";
         Comanda comanda = Comanda.processaComanda(linia);
         String nomComandaEsperat = "elimina mitja";
         int numArgumentsEsperats = 3;
         String arg1Esperat = "Natasha Java";
         String arg2Esperat = "twitter";
-        String arg3Esperat = "@nata123";
+        String arg3Esperat = "ata";
         assertEquals(nomComandaEsperat, comanda.getNom());
         assertEquals(numArgumentsEsperats, comanda.getNumArguments());
         assertEquals(arg1Esperat, extreuCometas(comanda.getArgument(0)));
@@ -320,7 +321,7 @@ public class ComandaTest {
         assertEquals(arg3Esperat,extreuCometas(comanda.getArgument(2)));
         assertFalse(comanda.esComandaDesconeguda());
     }
-    */
+    
    
     @Test
     public void testProcessaComandaAfegeixMitjaSenseDes() {
@@ -343,12 +344,51 @@ public class ComandaTest {
     public void testProcessaComandaAfegeixMitja() {
         String linia = "afegeix mitja Natasha telefon numero personal";
         Comanda comanda = Comanda.processaComanda(linia);
-        String nomComandaEsperat = "afegeix mitja sense desc";
-        int numArgumentsEsperats = 3;
+        String nomComandaEsperat = "afegeix mitja";
+        int numArgumentsEsperats = 4;
         String arg1Esperat = "Natasha";
         String arg2Esperat = "telefon";
         String arg3Esperat = "numero";
         String arg4Esperat = "personal";
+        assertEquals(nomComandaEsperat, comanda.getNom());
+        assertEquals(numArgumentsEsperats, comanda.getNumArguments());
+        assertEquals(arg1Esperat, extreuCometas(comanda.getArgument(0)));
+        assertEquals(arg2Esperat,extreuCometas(comanda.getArgument(1)));
+        assertEquals(arg3Esperat,extreuCometas(comanda.getArgument(2)));
+        assertEquals(arg4Esperat,extreuCometas(comanda.getArgument(3)));
+        assertFalse(comanda.esComandaDesconeguda());
+    }
+    
+    
+    @Test
+    public void testProcessaComandaAfegeixMitjaAmbCometas() {
+        String linia = "afegeix mitja \"Natasha Java\" \"telefon de casa\" numero personal";
+        Comanda comanda = Comanda.processaComanda(linia);
+        String nomComandaEsperat = "afegeix mitja";
+        int numArgumentsEsperats = 4;
+        String arg1Esperat = "Natasha Java";
+        String arg2Esperat = "telefon de casa";
+        String arg3Esperat = "numero";
+        String arg4Esperat = "personal";
+        assertEquals(nomComandaEsperat, comanda.getNom());
+        assertEquals(numArgumentsEsperats, comanda.getNumArguments());
+        assertEquals(arg1Esperat, extreuCometas(comanda.getArgument(0)));
+        assertEquals(arg2Esperat,extreuCometas(comanda.getArgument(1)));
+        assertEquals(arg3Esperat,extreuCometas(comanda.getArgument(2)));
+        assertEquals(arg4Esperat,extreuCometas(comanda.getArgument(3)));
+        assertFalse(comanda.esComandaDesconeguda());
+    }
+    
+    @Test
+    public void testProcessaComandaAfegeixMitjaAmbCometas2() {
+        String linia = "afegeix mitja \"Natasha Java\" \"red social\" numero \"me lo hackearon\"";
+        Comanda comanda = Comanda.processaComanda(linia);
+        String nomComandaEsperat = "afegeix mitja";
+        int numArgumentsEsperats = 4;
+        String arg1Esperat = "Natasha Java";
+        String arg2Esperat = "red social";
+        String arg3Esperat = "numero";
+        String arg4Esperat = "me lo hackearon";
         assertEquals(nomComandaEsperat, comanda.getNom());
         assertEquals(numArgumentsEsperats, comanda.getNumArguments());
         assertEquals(arg1Esperat, extreuCometas(comanda.getArgument(0)));

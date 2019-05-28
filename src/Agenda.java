@@ -13,6 +13,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @nomProject "Agenda", 
@@ -887,6 +889,45 @@ public class Agenda {
 		return linies;
 	}
 	
+	//importa totes del dades
+	private void importaDades(String path) throws Exception {
+		ArrayList<String> linies = readTextFile(path);
+		for (String l : linies) {
+			importaContactesAmbMitjans(l);
+		}
+	}
+
+	//métode que importa els contactes del fitxer especificat
+	private void importaContactesAmbMitjans(String text) throws InvalidParamException, SQLException {
+		String regex = "^(.+) (NUM|EMAIL) (.+)$";
+		Pattern pattern = Pattern.compile(regex);
+		Matcher matcher = pattern.matcher(text);
+		if (matcher.matches()) {
+			String nombre = matcher.group(1).trim();
+			String referencia = "";
+			String tipus = "";
+			Mitja m = new Mitja(tipus, referencia);		
+			if (matcher.group(2).trim().equals("NUM")) {
+				m.setTipus("telefon");
+				m.setReferencia(matcher.group(3).trim());
+			} else if (matcher.group(2).trim().equals("EMAIL")) {
+				m.setTipus("email");
+				m.setReferencia(matcher.group(3).trim());
+			}
+			Contacte c = new Contacte(nombre);
+			if (existeContacto(nombre)) {
+				if (!existeMitjaEnContacto(c, m.getTipus(), m.getReferencia(), null)){
+					afegeixMitjaAContacte(c.getId(), m);
+				}
+			}else {
+				//Contacte c = obtenirIdContactePeroNom
+				afegeixMitjaAContacte(c.getId(), m);
+			}	
+		}	
+	}
+	
+	
+	//método que retorna una lista con los datos de la página a mostrar
 	private List<Contacte> mostraPagina(int numPagina, int contactesXpagina, List<Contacte> contactes) {
 		int posInicial = (numPagina-1) * contactesXpagina;
 		int posInicialFija = posInicial;
@@ -898,8 +939,8 @@ public class Agenda {
 		return paginaResultant;
 	}
 	
-	private void llistarPagina (List<Contacte> paginaResultant)
-	{
+	//mostra els contactes de la pagina
+	private void llistarPagina (List<Contacte> paginaResultant){
 		for (Contacte c : paginaResultant) {
 			System.out.println(c.toString());
 		}
@@ -907,7 +948,6 @@ public class Agenda {
 	
 	//mostra els contactes en format paginació
 	private void mostraPaginant(List<Contacte> contactes) throws SQLException, InvalidParamException, NotFoundException {
-		List<Contacte> paginaResultant = new ArrayList<>();
 		int contactesXpagina = 5;
 		int numPaginas = 0;
 		int paginaActual=1;
@@ -918,29 +958,25 @@ public class Agenda {
 		if (resto > 0) 
 			numPaginas += 1;
 		
-		while (true) {
-			
+		while (true) {			
 			if (rpta.equals("S")) {
 				if(paginaActual < numPaginas)
 					paginaActual += 1;
 				
 				System.out.println("Pàgina: " + paginaActual + " de " + numPaginas + "\n");
-				paginaResultant = mostraPagina(paginaActual, contactesXpagina, carregaContactes());
-				llistarPagina(paginaResultant);
+				llistarPagina(mostraPagina(paginaActual, contactesXpagina, carregaContactes()));
 				System.out.println("\n S: pàgina següent \t A: pàgina anterior \t X: finalitzar");
 			} else if (rpta.equals("A")) {
 				if(paginaActual > 1)
 					paginaActual -= 1;
 				System.out.println("Pàgina: " + paginaActual + " de " + numPaginas + "\n");
-				paginaResultant = mostraPagina(paginaActual, contactesXpagina, carregaContactes());
-				llistarPagina(paginaResultant);
+				llistarPagina(mostraPagina(paginaActual, contactesXpagina, carregaContactes()));
 				System.out.println("\n S: pàgina següent\t A: pàgina anterior \t X: finalitzar");
 			} else if (rpta.equals("X")) {
 				break;
 			} else {
 				System.out.println("Pàgina: " + paginaActual + " de " + numPaginas + "\n");
-				paginaResultant = mostraPagina(paginaActual, contactesXpagina, carregaContactes());
-				llistarPagina(paginaResultant);
+				llistarPagina(mostraPagina(paginaActual, contactesXpagina, carregaContactes()));
 				System.out.println("\n S: pàgina següent \t A: pàgina anterior \t X: finalitzar");
 			}
 			rpta = entrada.next().toUpperCase();
@@ -1054,9 +1090,9 @@ public class Agenda {
 					} else if (comanda.getNom().equals("assigna descr nula")) {
 						agenda.gestionaAssignaDescripcio(comanda.getArgument(0),comanda.getArgument(1),comanda.getArgument(2),null);
 					} else if (comanda.getNom().equals("import")) {
-						System.out.println("import..");
+						agenda.importaDades(comanda.getArgument(0));
 					} else if (comanda.getNom().equals("export")) {
-						System.out.println("export...");
+						//agenda.exportaDades(comanda.getArgument(0));
 					} else if (comanda.getNom().equals("carrega")) {
 						for(Contacte c : agenda.carregaContactes()) {
 							System.out.println(c);

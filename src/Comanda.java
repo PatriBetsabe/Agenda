@@ -28,8 +28,8 @@ public class Comanda{
     	"^elimina mitja +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^assigna descr +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^assigna descr +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
-    	"import +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
-    	"^export +((\"[\\p{L} ]+\")|(\\p{L}+)) *$"
+    	"import +((\"[\\p{L} ]+\")|([\\p{L}\\d.]+)) *$",
+    	"export +((\"[\\p{L} ]+\")|([\\p{L}.]+)) *$"
     };
     
     private final String nom;
@@ -69,10 +69,7 @@ public class Comanda{
      */
     public static Comanda processaComanda(String linia) {
         linia = linia.trim();
-
         Comanda comanda;
-        
-        
         // cerca contacte
         if ((comanda = comprovaUnArg(linia, "cerca contacte", comandesRegex[0], 1)) != null)
             return comanda;

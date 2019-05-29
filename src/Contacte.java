@@ -79,13 +79,12 @@ public class Contacte {
 		if (mitja == null) {
 			throw new NotFoundException();
 		}else {
-			if (mitjans.containsKey(mitja.getTipus())) {
-				mitjans.get(mitja.getTipus()).add(mitja);
-			}else {
+			if (! mitjans.containsKey(mitja.getTipus())) {
 				mitjans.put(mitja.getTipus(), new ArrayList<Mitja>());
-				mitjans.get(mitja.getTipus()).add(mitja);
 			}
+			mitjans.get(mitja.getTipus()).add(mitja);
 		}
+	
 	}
 	
 	@Override

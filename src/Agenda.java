@@ -346,40 +346,45 @@ public class Agenda {
 	
 	// gestiona la eliminación de un medio del contacto
 	private void gestionaEliminaMitja(String str, String tipus, String ref) throws SQLException, InvalidParamException, NotFoundException {
-		int coincidencies = cercaCoincidencies(extreuCometas(str));
+		String s = extreuCometas(str);
+		String tip = extreuCometas(tipus);
+		String refe = extreuCometas(ref);
+		int coincidencies = cercaCoincidencies(extreuCometas(s));
 		if (coincidencies != 1) {
-			gestionaCoincidenciesDiferenteDeUno(extreuCometas(str));
+			gestionaCoincidenciesDiferenteDeUno(extreuCometas(s));
 		}else {
-			List<Contacte> c = contactesAmbCoincidencies(str);
-			if (!existeMitjaEnContacto(c.get(0), tipus, ref, null)) {
+			List<Contacte> c = contactesAmbCoincidencies(s);
+			if (!existeMitjaEnContacto(c.get(0), tip, refe, null)) {
 				System.out.println("El contacte no té aquest mitjà, no faig res");
 			} else {
-				eliminaMitjaDeContacte(c.get(0).getId(), tipus.trim().toLowerCase(),ref.trim().toLowerCase());
+				eliminaMitjaDeContacte(c.get(0).getId(), tip.trim().toLowerCase(),ref.trim().toLowerCase());
 			}
 		}
 	}
 	
 	// método que gestiona eñ añadir mitja al contacto, haciendo la verificacion de descr nula
 	private void gestionaAfegeixMitja(String str, String tipus, String ref, String descr) throws SQLException, InvalidParamException, NotFoundException {
-		int coincidencies = cercaCoincidencies(extreuCometas(str));
+		String s = extreuCometas(str);
+		String tip = extreuCometas(tipus);
+		String refe = extreuCometas(ref);
+		String desc = extreuCometas(descr);
+		int coincidencies = cercaCoincidencies(extreuCometas(s));
 		if (coincidencies != 1) {
-			gestionaCoincidenciesDiferenteDeUno(extreuCometas(str));
+			gestionaCoincidenciesDiferenteDeUno(extreuCometas(s));
 		}else {
-			List<Contacte> c = contactesAmbCoincidencies(str);
-			if (existeMitjaEnContacto(c.get(0), tipus, ref, descr)) {
+			List<Contacte> c = contactesAmbCoincidencies(s);
+			if (existeMitjaEnContacto(c.get(0), tip, refe, desc)) {
 				System.out.println("El contacte ja té aquest mitjà, no faig res");
 			} else {
-				if (descr != null) {
-					Mitja nou = new Mitja(tipus, ref, descr);
-					System.out.println("XXX c.get(0).getId():" + c.get(0).getId());
-					System.out.println("XXX dades mitja nou:" + nou.toString());
+				if (desc != null) {
+					Mitja nou = new Mitja(tip, refe, desc);
 					/**
 					 * XXX Mostrar quins mitjans són coneguts
 					 * (en el cas que el tipus del mitjà no és un dels coneguts)
 					 */
 					afegeixMitjaAContacte(c.get(0).getId(), nou);
 				}else {
-					Mitja nou = new Mitja(tipus,ref);
+					Mitja nou = new Mitja(tip,refe);
 					afegeixMitjaAContacteAmbDescrNull(c.get(0).getId(), nou);
 					System.out.println("afegit");
 				}				
@@ -492,18 +497,20 @@ public class Agenda {
 	
 	// método que gestiona el atributo categoria del contacto
 	private void gestionaAssignaCategoria(String str, String categoria) throws SQLException, InvalidParamException, NotFoundException {
-		int coincidencies = cercaCoincidencies(str);
+		String s = extreuCometas(str);
+		String cat = extreuCometas(categoria);
+		int coincidencies = cercaCoincidencies(s);
 		if (coincidencies != 1) {
-			gestionaCoincidenciesDiferenteDeUno(str);
+			gestionaCoincidenciesDiferenteDeUno(s);
 		}else {
-			List<Contacte> c = contactesAmbCoincidencies(str);
+			List<Contacte> c = contactesAmbCoincidencies(s);
 			System.out.println("segur que vols canviar o assignar categoria?");
 			System.out.println(c.get(0).toString());
 			System.out.print(">> ");
 			String rpta = entrada.next();
 			switch (rpta.toUpperCase()) {
 			case "SI":		
-				assignaCategoriaDeContacte(c.get(0).getId(), categoria);
+				assignaCategoriaDeContacte(c.get(0).getId(), cat);
 				System.out.println("Contacte actualitzat!");
 				break;
 			case "NO":
@@ -530,11 +537,12 @@ public class Agenda {
 	
 	// método que gestiona el renombramiento de un contacto
 	private void gestionaReanomenaContacte(String str, String nom) throws SQLException, InvalidParamException, NotFoundException {
-		int coincidencies = cercaCoincidencies(str);
+		String s = extreuCometas(str);
+		int coincidencies = cercaCoincidencies(s);
 		if (coincidencies != 1) {
-			gestionaCoincidenciesDiferenteDeUno(str);
+			gestionaCoincidenciesDiferenteDeUno(s);
 		}else {
-			List<Contacte> c = contactesAmbCoincidencies(str);
+			List<Contacte> c = contactesAmbCoincidencies(s);
 			System.out.println("segur que vols canviar el nom del contacte?");
 			System.out.println(c.get(0).toString());
 			System.out.print(">> ");
@@ -569,11 +577,12 @@ public class Agenda {
 	
 	// método que gestiona la eliminación de un contacto
 	private void gestionaEliminaContacte(String str) throws SQLException, InvalidParamException, NotFoundException {
-		int coincidencies = cercaCoincidencies(str);
+		String s = extreuCometas(str);
+		int coincidencies = cercaCoincidencies(s);
 		if (coincidencies != 1) {
-			gestionaCoincidenciesDiferenteDeUno(str);
+			gestionaCoincidenciesDiferenteDeUno(s);
 		}else {
-			List<Contacte> c = contactesAmbCoincidencies(str);
+			List<Contacte> c = contactesAmbCoincidencies(s);
 			System.out.println("segur que vols eliminar aquest contacte?");
 			System.out.println(c.get(0).toString());
 			System.out.print(">> ");
@@ -1137,7 +1146,7 @@ public class Agenda {
 	 */
 	private void carregaMitjansDeContacte(Contacte c2) throws NotFoundException, SQLException {
 		String sql = "SELECT * FROM MITJANS "
-				+ "WHERE ID_CONTACTE = " + c2.getId() + " ORDER BY TIPUS ASC";
+				+ "WHERE ID_CONTACTE = " + c2.getId() + " ORDER BY TIPUS";
 		//private Map<String, List<Mitja>> mitjans = new HashMap<>();
 		Statement st = null;
 		try {

@@ -60,7 +60,7 @@ public class Mitja {
 	@Override
 	public String toString() {
 		
-		if (descripcio == null || descripcio.equals("")) {
+		if (descripcio == null) {
 			return referencia;
 		}else {
 			return referencia + " (" + descripcio + ")";

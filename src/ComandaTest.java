@@ -459,6 +459,32 @@ public class ComandaTest {
     }
     
     @Test
+    public void testProcessaComandaPerImport2() {
+        String linia = "import 1contactes.txt";
+        Comanda comanda = Comanda.processaComanda(linia);
+        String nomComandaEsperat = "import";
+        int numArgumentsEsperats = 1;
+        String arg1Esperat = "1contactes.txt";
+        assertEquals(nomComandaEsperat, comanda.getNom());
+        assertEquals(numArgumentsEsperats, comanda.getNumArguments());
+        assertEquals(arg1Esperat, extreuCometas(comanda.getArgument(0)));
+        assertFalse(comanda.esComandaDesconeguda());
+    }
+    
+    @Test
+    public void testProcessaComandaPerExport2() {
+        String linia = "export contactes.lst";
+        Comanda comanda = Comanda.processaComanda(linia);
+        String nomComandaEsperat = "export";
+        int numArgumentsEsperats = 1;
+        String arg1Esperat = "contactes.lst";
+        assertEquals(nomComandaEsperat, comanda.getNom());
+        assertEquals(numArgumentsEsperats, comanda.getNumArguments());
+        assertEquals(arg1Esperat, extreuCometas(comanda.getArgument(0)));
+        assertFalse(comanda.esComandaDesconeguda());
+    }
+    
+    @Test
     public void testProcessaComandaPerComandaDesconeguda() {
         String linia = "comanda desconeguda";
         Comanda comanda = Comanda.processaComanda(linia);

@@ -20,7 +20,7 @@ public class Comanda{
     	"^cerca categoria +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^afegeix contacte +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^elimina contacte +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
-    	"^reanomena contacte +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",  "^afegeix num +([\\p{L} ]+) +([\\w.+]+) *$",
+    	"^reanomena contacte +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^assigna categoria +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^assigna categoria +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^afegeix mitja +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
@@ -28,7 +28,7 @@ public class Comanda{
     	"^elimina mitja +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^assigna descr +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^assigna descr +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
-    	"^import +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
+    	"import +((\"[\\p{L} ]+\")|(\\p{L}+)) *$",
     	"^export +((\"[\\p{L} ]+\")|(\\p{L}+)) *$"
     };
     
@@ -101,9 +101,11 @@ public class Comanda{
         if ((comanda = comprovaUnArg(linia, "assigna categoria nula", comandesRegex[6], 1)) != null)
             return comanda;
         
-        // assigna categoria nula
-        if ((comanda = comprovaDosArgs(linia, "assigna categoria", comandesRegex[7], 1, 4)) != null)
+        // assigna categoria nula 
+        if ((comanda = comprovaDosArgs(linia, "assigna categoria", comandesRegex[7], 1,4)) != null)
             return comanda;
+        
+        
         
         // afegeix mitja
         if ((comanda = comprovaQuatreArgs(linia, "afegeix mitja", comandesRegex[8], 1, 4, 7, 10)) != null)
@@ -122,11 +124,11 @@ public class Comanda{
             return comanda;
 
         //import
-        if ((comanda = comprovaUnArg(linia, "import", comandesRegex[13], 1)) != null)
+        if ((comanda = comprovaUnArg(linia,"import", comandesRegex[13], 1)) != null)
             return comanda;
         
         //export
-        if ((comanda = comprovaUnArg(linia, "export", comandesRegex[14], 1)) != null)
+        if ((comanda = comprovaUnArg(linia,"export", comandesRegex[14], 1)) != null)
             return comanda;
                
         // comanda amb paraula única

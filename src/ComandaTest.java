@@ -166,7 +166,7 @@ public class ComandaTest {
         String arg1Esperat = "Natasha";
         assertEquals(nomComandaEsperat, comanda.getNom());
         assertEquals(numArgumentsEsperats, comanda.getNumArguments());
-        assertEquals(arg1Esperat, comanda.getArgument(0));
+        assertEquals(arg1Esperat, extreuCometas(comanda.getArgument(0)));
         assertFalse(comanda.esComandaDesconeguda());
     }
     
@@ -429,6 +429,32 @@ public class ComandaTest {
         assertEquals(arg1Esperat, extreuCometas(comanda.getArgument(0)));
         assertEquals(arg2Esperat,extreuCometas(comanda.getArgument(1)));
         assertEquals(arg3Esperat,extreuCometas(comanda.getArgument(2)));
+        assertFalse(comanda.esComandaDesconeguda());
+    }
+    
+    @Test
+    public void testProcessaComandaPerImport() {
+        String linia = "import contactes";
+        Comanda comanda = Comanda.processaComanda(linia);
+        String nomComandaEsperat = "import";
+        int numArgumentsEsperats = 1;
+        String arg1Esperat = "contactes";
+        assertEquals(nomComandaEsperat, comanda.getNom());
+        assertEquals(numArgumentsEsperats, comanda.getNumArguments());
+        assertEquals(arg1Esperat, extreuCometas(comanda.getArgument(0)));
+        assertFalse(comanda.esComandaDesconeguda());
+    }
+    
+    @Test
+    public void testProcessaComandaPerExport() {
+        String linia = "export contactes";
+        Comanda comanda = Comanda.processaComanda(linia);
+        String nomComandaEsperat = "export";
+        int numArgumentsEsperats = 1;
+        String arg1Esperat = "contactes";
+        assertEquals(nomComandaEsperat, comanda.getNom());
+        assertEquals(numArgumentsEsperats, comanda.getNumArguments());
+        assertEquals(arg1Esperat, extreuCometas(comanda.getArgument(0)));
         assertFalse(comanda.esComandaDesconeguda());
     }
     

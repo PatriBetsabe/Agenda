@@ -70,6 +70,11 @@ public class Contacte {
 		return mitjans;
 	}
 	
+	public void setMitjans(Map<String, List<Mitja>> mitjans){
+		this.mitjans =  mitjans;
+	}
+	
+	
 	public void addMitja(Mitja mitja) throws NotFoundException {
 		if (mitja == null) {
 			throw new NotFoundException();
@@ -86,19 +91,20 @@ public class Contacte {
 	@Override
 	public String toString() {
 		String text = "";
-		if (categoria != null) {
-			text += this.getNom() + " (" + this.categoria + ")";
-		} else {
+		if (categoria == null) {
 			text += this.getNom();
+		} else {
+			text += this.getNom()+ " (" + this.categoria + ")";
 		}
 		if (!getMitjans().isEmpty()) {	
 			for (String tipus : getMitjans().keySet()) {
-				text += "\n-" + tipus + ": ";
+				text += "\n- " + tipus + ": ";
 				for (Mitja m : getMitjans().get(tipus)) {
 					text += m.toString() + " ";
 				}
 			}
 		}
+		System.out.println();
 		return text;
 	}
 

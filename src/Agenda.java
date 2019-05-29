@@ -11,7 +11,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,6 +42,27 @@ public class Agenda {
 			String url = "jdbc:postgresql://" + host + "/" + bd;
 			conn = DriverManager.getConnection(url, usuari, password);
 		}
+	}
+	
+	//muestra los comandos
+	private void mostraAjuda() {
+		String text = "ajuda: ofereix un text amb la descripció de totes les opcions disponibles.\n"
+				+ "sortir: finalitza l’execució de l’aplicació.\n"
+				+ "llista: mostra la llista de noms de tots els contactes\n"
+				+ "cerca contacte «str»: mostra la llista de tots els contactes que contenen el substring str.\n"
+				+ "cerca categoria «cat»: mostra tots els contactes de la categoria cat\n"
+				+ "cerca categoria «cat» «str»: mostra tots els contactes de la categoria cat que continguin str \n"
+				+ "afegeix contacte «nom»: crea un contacte amb el nom \n"
+				+ "elimina contacte «str»: elimina totes les dades del contacte\n"
+				+ "reanomena contacte «str» «nom»: canvia el nom anterior pel nou especificat.\n"
+				+ "assigna categoria «str» [«cat»]: canvia la categoria anterior per la nova.\n"
+				+ "afegeix mitja «str» «tipus» «ref» [«descr»]: afegirà el mitjà al contacte indicat\n"
+				+ "elimina mitja «str» «tipus» «ref»: elimina el mitjà de contacte.\n"
+				+ "assigna descr «str» «tipus» «ref» [«descr»]: assigna una nova descripcio a un mitjà.\n"
+				+ "ENTER: mostra contacte en format paginació.\n"
+				+ "import cami_a_fitxer: Importarà els contactes del fitxer especificat.\n"
+				+ "export cami_a_fitxer: Exportarà els contactes al fitxer especificat.";
+		System.out.println(text);
 	}
  
 	/**
@@ -107,11 +130,13 @@ public class Agenda {
 	 * Muestra la lista de todos los contactos que contienen el string
 	 * pasado por parámetro en su nombre o sus medios
 	 * @param str
+	 * @throws NotFoundException 
+	 * @throws InvalidParamException 
 	 */
-	private void cercaContactePerStr(String str) throws SQLException {
+	private void cercaContactePerStr(String str) throws SQLException, InvalidParamException, NotFoundException {
 		String s = extreuCometas(str);
-		String sql_buscanom =	"select distinct c.nom " 
-								+ "from contactes c join mitjans m on (c.id = m.id_contacte) "
+		String sql_buscanom =	"select distinct c.nom, c.id " 
+								+ "from contactes c left outer join mitjans m on (c.id = m.id_contacte) "
 								+ "where lower(m.tipus) like "
 								+ "'%" + s.toLowerCase() + "%' or "
 								+ "lower(m.referencia) like  "
@@ -120,8 +145,6 @@ public class Agenda {
 								+ "'%" + s.toLowerCase() + "%' or "
 								+ "lower(c.nom) like "
 								+ "'%" + s.toLowerCase() + "%'";
-
-		System.out.println("XXX cercaContactePerStr('"+s+"') " + sql_buscanom);
 		Statement st = null;
 		try {
 			st = conn.createStatement();
@@ -129,8 +152,10 @@ public class Agenda {
 			int nContactes = 0; 
 			while (rs.next()) {
 				String nom = rs.getString("nom");
+				int id = rs.getInt("id");
 				nContactes++;
-				System.out.println(nom);
+				Contacte c = carregaContacte(id);
+				System.out.println(c.toString());
 			}
 			if (nContactes==0) {
 				System.out.println("Cap contactes que contingui '"+ s +"'");
@@ -180,7 +205,7 @@ public class Agenda {
 		String c = extreuCometas(categoria).toLowerCase();
 		String s = extreuCometas(str).toLowerCase();
 		String sql_buscat =	"select distinct c.nom " 
-				+ "from contactes c join mitjans m on (c.id = m.id_contacte) "
+				+ "from contactes c left outer join mitjans m on (c.id = m.id_contacte) "
 				+ "where lower(categoria) like "
 				+ "'" + c + "' and"
 				+ "(lower(m.tipus) like "
@@ -356,6 +381,7 @@ public class Agenda {
 				}else {
 					Mitja nou = new Mitja(tipus,ref);
 					afegeixMitjaAContacteAmbDescrNull(c.get(0).getId(), nou);
+					System.out.println("afegit");
 				}				
 			}
 		}
@@ -773,6 +799,8 @@ public class Agenda {
 		return resultat;
 	}
 	
+	
+	
 	// retorna 1 si el str está contenido en algun dato del contacto
 	public int cercaCoincidenciesenContacte(Contacte c,String str){
 		boolean trobat = cercaCoincidenciesEnNomContacte(c, str)
@@ -847,7 +875,7 @@ public class Agenda {
      * El booleà amplia permet indicar:
      *  true: afegir les línies després dels continguts existents al fitxer
      *  false: reemplaçar els continguts anteriors al fitxer pels nous */
-    private static void writeTextFile(String path,ArrayList<String> linies,boolean amplia) throws Exception {
+    private static void writeTextFile(String path,List<String> linies,boolean amplia) throws Exception {
         FileWriter fileWriter = new FileWriter(path, amplia);
         BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
         for (String linia: linies) {
@@ -889,43 +917,107 @@ public class Agenda {
 		return linies;
 	}
 	
-	//importa totes del dades
+	/**
+	 * retorna el detalle de los contactes en formato
+	 * para guarda en el fichero
+	 * @throws Exception 
+	 */
+	private void exportaContactos(String path) throws Exception{
+		List<String> linies = new ArrayList<String>();
+		for (Contacte c : carregaContactes()) {
+			for (String tipus : c.getMitjans().keySet()) {
+				for (Mitja m : c.getMitjans().get(tipus)) {
+					if (m.getTipus().toLowerCase().equals("telefon")) {
+						linies.add(c.getNom() + " NUM " + m.getReferencia() + "\n");
+					} else if (m.getTipus().toLowerCase().equals("email")) {
+						linies.add(c.getNom() + " EMAIL " + m.getReferencia() + "\n");
+					}
+				}
+			}
+		}
+		writeTextFile(path, linies, false);
+		System.out.println("contactes exportats al fitxer '"+ path + "' amb èxit");
+	}
+	
+	
+	//importa totes les dades
 	private void importaDades(String path) throws Exception {
 		ArrayList<String> linies = readTextFile(path);
 		for (String l : linies) {
-			importaContactesAmbMitjans(l);
+			importaContacteAmbMitjans(l);
 		}
 	}
 
+	
 	//métode que importa els contactes del fitxer especificat
-	private void importaContactesAmbMitjans(String text) throws InvalidParamException, SQLException {
-		String regex = "^(.+) (NUM|EMAIL) (.+)$";
-		Pattern pattern = Pattern.compile(regex);
-		Matcher matcher = pattern.matcher(text);
-		if (matcher.matches()) {
-			String nombre = matcher.group(1).trim();
-			String referencia = "";
-			String tipus = "";
-			Mitja m = new Mitja(tipus, referencia);		
-			if (matcher.group(2).trim().equals("NUM")) {
-				m.setTipus("telefon");
-				m.setReferencia(matcher.group(3).trim());
-			} else if (matcher.group(2).trim().equals("EMAIL")) {
-				m.setTipus("email");
-				m.setReferencia(matcher.group(3).trim());
-			}
-			Contacte c = new Contacte(nombre);
-			if (existeContacto(nombre)) {
-				if (!existeMitjaEnContacto(c, m.getTipus(), m.getReferencia(), null)){
-					afegeixMitjaAContacte(c.getId(), m);
+		private void importaContacteAmbMitjans(String text) throws InvalidParamException, SQLException, NotFoundException {
+			String regex = "^(.+) (NUM|EMAIL) (.+)$";
+			Pattern pattern = Pattern.compile(regex);
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.matches()) {
+				String g1 = matcher.group(1).trim();
+				String g2 = matcher.group(2).trim();
+				String g3 = matcher.group(3).trim();
+				String tipus_g2 = "";
+				String nombre = g1;
+				String referencia = "";
+				String tipus = "";
+				
+				Mitja m = new Mitja(tipus, referencia);		
+				if (g2.equals("NUM")) {
+					tipus_g2 = "telefon";
+					m.setTipus("telefon");
+					m.setReferencia(g3);
+				} else if (g2.equals("EMAIL")) {
+					tipus_g2 = "email";
+					m.setTipus("email");
+					m.setReferencia(g3);
 				}
-			}else {
-				//Contacte c = obtenirIdContactePeroNom
-				afegeixMitjaAContacte(c.getId(), m);
+				
+				Contacte c = new Contacte(nombre);
+				if (existeContacto(nombre)) {		
+					int id = obtenirIdContactePerNom(nombre);
+					c = carregaContacte(id);
+					if (c.getMitjans().containsKey(tipus_g2)) {
+						boolean existe_mitja = false;
+						for (int i = 0 ; i < c.getMitjans().get(tipus_g2).size() && !existe_mitja; i++){
+							if(c.getMitjans().get(tipus_g2).get(i).getReferencia().equals(g3)) {
+								existe_mitja = true;
+							}
+						}
+						if(!existe_mitja){
+							Mitja nouMitja = new Mitja(tipus_g2,g3);
+							afegeixMitjaAContacte(id, nouMitja);
+						}
+					}
+				}else {		
+					afegeixContactePerNom(nombre);
+					int id = obtenirIdContactePerNom(nombre);
+					Contacte nouC = carregaContacte(id);
+					Mitja nouMitja = new Mitja(tipus_g2,g3);
+					nouC.addMitja(nouMitja);
+					afegeixMitjaAContacte(id, nouMitja);
+				}	
 			}	
-		}	
 	}
 	
+	/**
+	 * método que retorna el id del contacto que tiene el nombre que
+	 * es unico
+	 * @throws NotFoundException 
+	 * @throws InvalidParamException 
+	 * @throws SQLException 
+	 */
+	private int obtenirIdContactePerNom(String nom) throws SQLException, InvalidParamException, NotFoundException {
+		int resposta = 0;
+		for (Contacte c : carregaContactes()) {
+			if (c.getNom().equals(nom.trim())){
+				resposta = c.getId();
+				break;
+			}
+		}
+		return resposta;
+	}
 	
 	//método que retorna una lista con los datos de la página a mostrar
 	private List<Contacte> mostraPagina(int numPagina, int contactesXpagina, List<Contacte> contactes) {
@@ -1013,6 +1105,29 @@ public class Agenda {
 		return contactes;
 	}
 	
+	private Contacte carregaContacte(int id) throws SQLException, InvalidParamException, NotFoundException {
+		String sql = "SELECT * FROM CONTACTES where id = " + id;
+		Statement st = null;
+		Contacte c = new Contacte();
+		try {
+			st = conn.createStatement();
+			ResultSet rs = st.executeQuery(sql);
+			while (rs.next()) {
+				String nom = rs.getString("nom");
+				String cat = rs.getString("categoria");
+				c.setId(id);
+				c.setNom(nom);
+				if(cat != null)
+					c.setCategoria(cat);
+				carregaMitjansDeContacte(c);
+			}
+		}finally {
+            if (st != null) { st.close(); }
+        }
+		return c;
+	}
+	
+	
 	/**
 	 * Carga los medios de contacto,
 	 * en caso este tuviese medios (tenga relación clave foranea = clave primaria)
@@ -1020,9 +1135,10 @@ public class Agenda {
 	 * @throws NotFoundException
 	 * @throws SQLException
 	 */
-	private void carregaMitjansDeContacte(Contacte c) throws NotFoundException, SQLException {
+	private void carregaMitjansDeContacte(Contacte c2) throws NotFoundException, SQLException {
 		String sql = "SELECT * FROM MITJANS "
-				+ "WHERE ID_CONTACTE = " + c.getId();
+				+ "WHERE ID_CONTACTE = " + c2.getId() + " ORDER BY TIPUS ASC";
+		//private Map<String, List<Mitja>> mitjans = new HashMap<>();
 		Statement st = null;
 		try {
 			st = conn.createStatement();
@@ -1034,7 +1150,7 @@ public class Agenda {
 				String descripcio = rs.getString("descripcio");
 				if (descripcio == null) { descripcio = "";}
 				Mitja m = new Mitja(id, tipus, referencia, descripcio);
-				c.addMitja(m);
+				c2.addMitja(m);
 			}
 		} finally {
 			if (st != null) {
@@ -1058,7 +1174,7 @@ public class Agenda {
 				Comanda comanda = Comanda.processaComanda(input);
 				if (!comanda.esComandaDesconeguda()) {
 					if (comanda.getNom().equals("ajuda")) {
-						System.out.println("les comandes son:....");
+						agenda.mostraAjuda();
 					} else if (comanda.getNom().equals("sortir")) {
 						break;
 					} else if (comanda.getNom().equals("llista")) {
@@ -1092,7 +1208,7 @@ public class Agenda {
 					} else if (comanda.getNom().equals("import")) {
 						agenda.importaDades(comanda.getArgument(0));
 					} else if (comanda.getNom().equals("export")) {
-						//agenda.exportaDades(comanda.getArgument(0));
+						agenda.exportaContactos(comanda.getArgument(0));
 					} else if (comanda.getNom().equals("carrega")) {
 						for(Contacte c : agenda.carregaContactes()) {
 							System.out.println(c);
